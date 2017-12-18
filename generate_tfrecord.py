@@ -63,7 +63,7 @@ def _create_tf_example(data):
     label_x = data['x']
     label_y = data['y']
 
-    # After geting all the features, time to generate tensorflow record file.
+    # After getting all the features, time to generate TensorFlow record file.
     tf_example = tf.train.Example(features=tf.train.Features(feature={
         'image/height': _int64_feature(height),
         'image/width': _int64_feature(width),

@@ -12,6 +12,7 @@ def main():
     field_names = ['jpg', 'json']
     with open('filelist.csv', 'w', newline='') as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=field_names)
+        writer.writeheader()
         for file_path, _, file_names in os.walk(FILE_DIR, followlinks=False):
             for file in file_names:
                 if file.split(".")[-1] in FORMAT:

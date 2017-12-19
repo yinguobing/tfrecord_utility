@@ -10,6 +10,7 @@ import tensorflow as tf
 import cv2
 
 FLAGS = None
+IMG_SIZE = 128
 
 
 def _extract_feature(element):
@@ -21,10 +22,18 @@ def _extract_feature(element):
         # Defaults are not specified since both keys are required.
         features={
             'image/encoded': tf.FixedLenFeature([], tf.string),
-            'label/x': tf.FixedLenFeature([], tf.int64),
-            'label/y': tf.FixedLenFeature([], tf.int64)
+            'label/points': tf.FixedLenFeature([136], tf.float32)
         })
     return features
+
+
+def _draw_landmark_point(image, points):
+    """
+    Draw landmark point on image.
+    """
+    for point in points:
+        cv2.circle(image, (int(point[0]), int(
+            point[1])), 2, (0, 255, 0), -1, cv2.LINE_AA)
 
 
 def show_record(filenames):
@@ -41,8 +50,7 @@ def show_record(filenames):
     # Extract features from single example
     features = _extract_feature(next_example)
     image_decoded = tf.image.decode_image(features['image/encoded'])
-    label_x = tf.cast(features['label/x'], tf.int32)
-    label_y = tf.cast(features['label/y'], tf.int32)
+    points = tf.cast(features['label/points'], tf.float32)
 
     # Use openCV for preview
     cv2.namedWindow("image", cv2.WINDOW_NORMAL)
@@ -51,16 +59,21 @@ def show_record(filenames):
     with tf.Session() as sess:
         while True:
             try:
-                image_tensor, label_text = sess.run(
-                    [image_decoded, (label_x, label_y)])
+                image_tensor, raw_points = sess.run(
+                    [image_decoded, points])
 
                 # Use OpenCV to preview the image.
                 image = np.array(image_tensor, np.uint8)
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
+                # Draw the landmark on image
+                landmark = np.reshape(raw_points, (-1, 2)) * IMG_SIZE
+                _draw_landmark_point(image, landmark)
+
+                # Show the result
                 cv2.imshow("image", image)
                 cv2.waitKey(100)
 
-                # Show the labels
-                print(label_text)
             except tf.errors.OutOfRangeError:
                 break
 

@@ -19,6 +19,7 @@ def main():
                     common_name = file.split(".")[-2]
                     jpg_file = str(os.path.join(file_path, common_name + '.jpg'))
                     json_file = str(os.path.join(file_path, common_name + '.json'))
+                    writer.writeheader()
                     writer.writerow({'jpg': jpg_file, 'json': json_file})
                     counter += 1
                     # print(common_name)

@@ -3,14 +3,14 @@ import csv
 import os
 
 FORMAT = ["json"]
-FILE_DIR = "/home/robin/Documents/landmark/223K"
+FILE_DIR = "/home/robin/Desktop/export/feature36"
 
 
 def main():
     """MAIN"""
     counter = 0
     field_names = ['jpg', 'json']
-    with open('filelist.csv', 'w', newline='') as csv_file:
+    with open('data.csv', 'w', newline='') as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=field_names)
         writer.writeheader()
         for file_path, _, file_names in os.walk(FILE_DIR, followlinks=False):

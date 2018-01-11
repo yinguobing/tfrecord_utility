@@ -10,7 +10,7 @@ import tensorflow as tf
 import cv2
 
 FLAGS = None
-IMG_SIZE = 128
+IMG_SIZE = 24
 
 
 def _extract_feature(element):
@@ -22,7 +22,7 @@ def _extract_feature(element):
         # Defaults are not specified since both keys are required.
         features={
             'image/encoded': tf.FixedLenFeature([], tf.string),
-            'label/points': tf.FixedLenFeature([136], tf.float32)
+            'label/points': tf.FixedLenFeature([2], tf.float32)
         })
     return features
 
@@ -53,7 +53,7 @@ def show_record(filenames):
     points = tf.cast(features['label/points'], tf.float32)
 
     # Use openCV for preview
-    cv2.namedWindow("image", cv2.WINDOW_NORMAL)
+    # cv2.namedWindow("image", cv2.WINDOW_NORMAL)
 
     # Actrual session to run the graph.
     with tf.Session() as sess:
@@ -72,7 +72,8 @@ def show_record(filenames):
 
                 # Show the result
                 cv2.imshow("image", image)
-                cv2.waitKey(100)
+                if cv2.waitKey() == 27:
+                    break
 
             except tf.errors.OutOfRangeError:
                 break

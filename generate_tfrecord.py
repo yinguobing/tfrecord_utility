@@ -47,6 +47,14 @@ def _bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
+def dense_to_sparse(arr):
+    """Convert a dense tensor to a sparse one."""
+    idx = np.where(arr != 0.0)
+    print(arr[idx])
+    print(arr.shape)
+    return (idx, arr[idx], arr.shape)
+
+
 def _create_tf_example(data):
     """
     create TFRecord example from a single row of data.

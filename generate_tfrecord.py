@@ -103,9 +103,12 @@ def main(unused_argv):
     """
     entrance
     """
+    counter = 0
     tf_writer = tf.python_io.TFRecordWriter(FLAGS.output_file)
     examples = pd.read_csv(FLAGS.csv_input)
     for _, row in examples.iterrows():
+        counter += 1
+        print(counter, row['jpg'])
         current_example = _create_tf_example(row)
         tf_writer.write(current_example.SerializeToString())
     tf_writer.close()

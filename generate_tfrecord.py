@@ -25,9 +25,12 @@ import io
 import json
 import sys
 
+import numpy as np
 import pandas as pd
 import tensorflow as tf
 from PIL import Image
+
+from generate_heat_map import put_heat
 
 FLAGS = None
 
@@ -66,6 +69,22 @@ def _create_tf_example(data):
     with open(json_url) as json_file:
         points = json.load(json_file)
 
+    # Get marks locations.
+    label_marks = np.array(points, dtype=np.float32)
+    label_marks = np.reshape(label_marks, (-1, 2)) * 64
+
+    # Draw heat on map.
+    heat_maps = []
+    for point in label_marks:
+        heat_map = np.zeros((64, 64), dtype=np.float32)
+        put_heat(heat_map, point, sigma=1.9)
+        heat_map_serialized = heat_map.flatten()
+        heat_maps.append(heat_map_serialized)
+
+    # Flatten heat maps as tf.train.feature accept only 1-d array.
+    heat_maps = np.array(heat_maps, dtype=np.float32)
+    heat_maps = heat_maps.reshape(-1,)
+
     # After getting all the features, time to generate a TensorFlow example.
     tf_example = tf.train.Example(features=tf.train.Features(feature={
         'image/height': _int64_feature(height),
@@ -75,6 +94,7 @@ def _create_tf_example(data):
         'image/encoded': _bytes_feature(encoded_jpg),
         'image/format': _bytes_feature(image_format),
         'label/points': _float32_feature(points),
+        'label/heat_maps': _float32_feature(heat_maps)
     }))
     return tf_example
 

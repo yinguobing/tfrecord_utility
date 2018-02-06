@@ -105,7 +105,7 @@ def _create_tf_example(data):
         'label/points': _float32_feature(points),
         'heat_maps/index': _int64_feature(sparse_index),
         'heat_maps/value': _float32_feature(sparse_value),
-        'heat_maps/shape': _int64_feature(sparse_shape[0])
+        'heat_maps/shape': _int64_feature([sparse_shape[0]])
     }))
     return tf_example
 

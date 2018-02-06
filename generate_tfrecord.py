@@ -36,7 +36,7 @@ FLAGS = None
 
 
 def _int64_feature(value):
-    return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
 
 
 def _float32_feature(value):
@@ -50,9 +50,7 @@ def _bytes_feature(value):
 def dense_to_sparse(arr):
     """Convert a dense tensor to a sparse one."""
     idx = np.where(arr != 0.0)
-    print(arr[idx])
-    print(arr.shape)
-    return (idx, arr[idx], arr.shape)
+    return (idx[0], arr[idx], arr.shape)
 
 
 def _create_tf_example(data):
@@ -93,16 +91,21 @@ def _create_tf_example(data):
     heat_maps = np.array(heat_maps, dtype=np.float32)
     heat_maps = heat_maps.reshape(-1,)
 
+    # Convert heat map to a sparse tensor.
+    sparse_index, sparse_value, sparse_shape = dense_to_sparse(heat_maps)
+
     # After getting all the features, time to generate a TensorFlow example.
     tf_example = tf.train.Example(features=tf.train.Features(feature={
-        'image/height': _int64_feature(height),
-        'image/width': _int64_feature(width),
+        'image/height': _int64_feature([height]),
+        'image/width': _int64_feature([width]),
         'image/filename': _bytes_feature(filename),
         'image/source_id': _bytes_feature(filename),
         'image/encoded': _bytes_feature(encoded_jpg),
         'image/format': _bytes_feature(image_format),
         'label/points': _float32_feature(points),
-        'label/heat_maps': _float32_feature(heat_maps)
+        'heat_maps/index': _int64_feature(sparse_index),
+        'heat_maps/value': _float32_feature(sparse_value),
+        'heat_maps/shape': _int64_feature(sparse_shape[0])
     }))
     return tf_example
 

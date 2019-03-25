@@ -74,11 +74,13 @@ def test_record(record_path):
     parsed_image_dataset = raw_image_dataset.map(_parse_image_function)
 
     for image_features in parsed_image_dataset:
+        label = image_features['label'].numpy()
         image_raw = image_features['image_raw']
         with tf.gfile.GFile('sample.jpg', 'w') as fp:
             fp.write(image_raw.numpy())
         break
-    print("Image extracted and written to the current directory as sample.jpg.")
+    print('One record parsed, label: {}'.format(label))
+    print("An image extracted had been written to the current directory as sample.jpg.")
 
 
 def run():
@@ -109,12 +111,12 @@ def run():
             # Write the example to file.
             writer.write(tf_example.SerializeToString())
 
-            if i > 10:
-                break
-
     print("All done. Record file is:\n{}".format(TFRECORD))
 
 
 if __name__ == "__main__":
+    # Generate TFRecord file.
     run()
+
+    # Test the file.
     test_record(TFRECORD)

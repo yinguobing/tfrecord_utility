@@ -22,8 +22,7 @@ logging.basicConfig(level=logging.DEBUG)
 # FLAGS, used as interface of user inputs.
 flags = tf.app.flags
 flags.DEFINE_string('path_to_records', '', 'The path of record files')
-flags.DEFINE_bool('shuffle', 'True',
-                  'Shuffle records?')
+flags.DEFINE_bool('shuffle', 'True', 'Shuffle records?')
 flags.DEFINE_integer('num_shards', 10, 'Number of the shards')
 flags.DEFINE_string('output_file', '', 'record.record')
 FLAGS = flags.FLAGS
@@ -55,7 +54,7 @@ def read_records(filenames, shuffle=True):
     # Shuffle dataset.
     dataset = dataset.shuffle(1024)
 
-    # Make dataset iteratable.
+    # Make dataset iterateable.
     iterator = dataset.make_one_shot_iterator()
     next_example = iterator.get_next()
 
@@ -64,10 +63,11 @@ def read_records(filenames, shuffle=True):
 
 def main(_):
     record_files = list_records(FLAGS.path_to_records)
-    logging.debug("Number of records to be processed: {}".format(len(record_files)))
+    logging.debug(
+        "Number of records to be processed: {}".format(len(record_files)))
     next_example = read_records(record_files, shuffle=FLAGS.shuffle)
 
-    # To maxmize file I/O throughout, split the training data into pieces.
+    # To maximize file I/O throughout, split the training data into pieces.
     with contextlib2.ExitStack() as tf_record_close_stack:
         output_records = tf_record_creation_util.open_sharded_output_tfrecords(
             tf_record_close_stack, FLAGS.output_file, FLAGS.num_shards)
@@ -79,7 +79,8 @@ def main(_):
                     serialized_example = sess.run(next_example)
                     index += 1
                     output_shard_index = index % FLAGS.num_shards
-                    output_records[output_shard_index].write(serialized_example)
+                    output_records[output_shard_index].write(
+                        serialized_example)
 
                     logging.debug("Samples processed: {}".format(index))
 

@@ -55,7 +55,7 @@ def show_record(filenames):
     # Use openCV for preview
     # cv2.namedWindow("image", cv2.WINDOW_NORMAL)
 
-    # Actrual session to run the graph.
+    # Actual session to run the graph.
     with tf.Session() as sess:
         while True:
             try:

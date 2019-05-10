@@ -2,8 +2,6 @@
 
 Generate TFRecord file with TensorFlow.
 
-
-
 ## Getting Started
 This is a collection of handy Python scripts related with TensorFlow TFRecord file generation.
 

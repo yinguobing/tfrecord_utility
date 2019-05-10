@@ -43,7 +43,7 @@ def show_record(filenames):
     # Generate dataset from TFRecord file.
     dataset = tf.data.TFRecordDataset(filenames)
 
-    # Make dataset iteratable.
+    # Make dataset iterateable.
     iterator = dataset.make_one_shot_iterator()
     next_example = iterator.get_next()
 

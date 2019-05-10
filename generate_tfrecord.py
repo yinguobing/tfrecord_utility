@@ -29,14 +29,17 @@ FLAGS = None
 
 
 def _int64_feature(value):
+    """Returns an int64_list from a bool / enum / int / uint."""
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 
-def _float32_feature(value):
-    return tf.train.Feature(float_list=tf.train.FloatList(value=value))
+def _float_feature(value):
+    """Returns a float_list from a float / double."""
+    return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
 
 
 def _bytes_feature(value):
+    """Returns a bytes_list from a string / byte."""
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
@@ -70,7 +73,7 @@ def _create_tf_example(data):
         'image/source_id': _bytes_feature(filename),
         'image/encoded': _bytes_feature(encoded_jpg),
         'image/format': _bytes_feature(image_format),
-        'label/points': _float32_feature(points),
+        'label/points': _float_feature(points),
     }))
     return tf_example
 

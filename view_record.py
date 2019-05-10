@@ -4,27 +4,39 @@ Usage:
 """
 import argparse
 
+import cv2
 import numpy as np
 import tensorflow as tf
 
-import cv2
+tf.enable_eager_execution()
 
 FLAGS = None
 IMG_SIZE = 24
 
 
-def _extract_feature(element):
-    """
-    Extract features from a single example from dataset.
-    """
-    features = tf.parse_single_example(
-        element,
-        # Defaults are not specified since both keys are required.
-        features={
-            'image/encoded': tf.FixedLenFeature([], tf.string),
-            'label/points': tf.FixedLenFeature([2], tf.float32)
-        })
-    return features
+def parse_tfrecord(record_path):
+    """Try to extract a image from the record file as jpg file."""
+    dataset = tf.data.TFRecordDataset(record_path)
+
+    # Create a dictionary describing the features. This dict should be
+    # consistent with the one used while generating the record file.
+    feature_description = {
+        'image/height': tf.FixedLenFeature([], tf.int64),
+        'image/width': tf.FixedLenFeature([], tf.int64),
+        'image/depth': tf.FixedLenFeature([], tf.int64),
+        'image/filename': tf.FixedLenFeature([], tf.string),
+        'image/encoded': tf.FixedLenFeature([], tf.string),
+        'image/format': tf.FixedLenFeature([], tf.string),
+        'label/marks': tf.FixedLenFeature([2], tf.float32),
+        'label/pose': tf.FixedLenFeature([], tf.float32)
+    }
+
+    def _parse_function(example_proto):
+        # Parse the input tf.Example proto using the dictionary above.
+        return tf.parse_single_example(example_proto, feature_description)
+
+    parsed_dataset = dataset.map(_parse_function)
+    return parsed_dataset
 
 
 def _draw_landmark_point(image, points):

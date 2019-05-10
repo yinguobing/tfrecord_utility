@@ -21,6 +21,7 @@ import sys
 import pandas as pd
 import tensorflow as tf
 from PIL import Image
+from tqdm import tqdm
 
 tf.enable_eager_execution()
 
@@ -119,7 +120,7 @@ def main(_):
     tf_writer = tf.python_io.TFRecordWriter(FLAGS.output_file)
 
     samples = pd.read_csv(FLAGS.csv)
-    for _, row in samples.iterrows():
+    for _, row in tqdm(samples.iterrows()):
         sample_name = row['file_basename']
         img_file, mark_file, pose_file = get_ibug_files(sample_name)
         ibug_sample = get_ibug_sample(img_file, mark_file, pose_file)

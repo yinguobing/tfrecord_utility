@@ -11,7 +11,7 @@ Usage:
         --image_dir=path_to_image \
         --mark_dir=path_to_marks \
         --pose_dir=path_to_pose \
-        --output_file=ibug.record
+        --output_file=data/ibug.record
 
 """
 import json

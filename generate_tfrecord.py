@@ -43,38 +43,49 @@ def _bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
-def _create_tf_example(data):
-    """
-    create TFRecord example from a single row of data.
-    """
-    # Encode jpg file.
-    img_url = data['jpg']
-    img_name = data['jpg'].split('.')[-2]
+def get_ibug_sample(image_file, mark_file, pose_file):
+    """Create a ibug sample from raw disk files."""
+    # Keep the filename in the record for debug reasons.
+    filename = image_file.split('/')[-1].split('.')[-2]
+    ext_name = image_file.split('/')[-1].split('.')[-1]
 
-    # Read encoded image file, and get properties we need.
-    with tf.gfile.GFile(img_url, 'rb') as fid:
+    # Read encoded image file.
+    with tf.gfile.GFile(image_file, 'rb') as fid:
         encoded_jpg = fid.read()
-    encoded_jpg_io = io.BytesIO(encoded_jpg)
-    image = Image.open(encoded_jpg_io)
-    width, height = image.size
-    filename = img_name.encode('utf8')
-    image_format = b'jpg'
 
-    # Encode json file.
-    json_url = data['json']
-    with open(json_url) as json_file:
-        points = json.load(json_file)
+    # Read the marks from a json file.
+    with open(mark_file) as fid:
+        marks = json.load(fid)
+
+    # Read the pose from a json file.
+    with open(pose_file) as fid:
+        pose = json.load(fid)
+
+    return {"filename": filename,
+            "image_format": ext_name,
+            "image": encoded_jpg,
+            "marks": marks,
+            "pose": pose}
+
+
+def _create_tf_example(ibug_sample):
+    """create TFRecord example from a data sample."""
+    # Get required features ready.
+    image_shape = tf.image.decode_jpeg(ibug_sample["image"]).shape
 
     # After getting all the features, time to generate a TensorFlow example.
-    tf_example = tf.train.Example(features=tf.train.Features(feature={
-        'image/height': _int64_feature(height),
-        'image/width': _int64_feature(width),
-        'image/filename': _bytes_feature(filename),
-        'image/source_id': _bytes_feature(filename),
-        'image/encoded': _bytes_feature(encoded_jpg),
-        'image/format': _bytes_feature(image_format),
-        'label/points': _float_feature(points),
-    }))
+    feature = {
+        'image/height': _int64_feature(image_shape[0]),
+        'image/width': _int64_feature(image_shape[1]),
+        'image/depth': _int64_feature(image_shape[2])
+        'image/filename': _bytes_feature(ibug_sample['filename']),
+        'image/encoded': _bytes_feature(ibug_sample['image']),
+        'image/format': _bytes_feature(ibug_sample['image_format'),
+        'label/marks': _float_feature(ibug_sample['marks']),
+        'label/pose': _float_feature(ibug_sample['pose'])
+    }
+    tf_example = tf.train.Example(features=tf.train.Features(feature=feature))
+
     return tf_example
 
 

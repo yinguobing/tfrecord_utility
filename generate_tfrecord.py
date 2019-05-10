@@ -1,22 +1,18 @@
 """
+A demonstartion file showing how to generate TensorFlow TFRecord file.
+The sample used here is a extended IBUG data set which is consist of three parts:
+ 1. a sample image.
+ 2. 68 facial landmarks.
+ 3. head pose: pitch, yaw and roll angels. (This is not in the original IBUG data)
+
 Usage:
-    # Create train record:
     python generate_tfrecord.py \
-        --csv_input=data/data_train.csv \
-        --img_folder=images \
-        --output_file=train.record
+        --csv=data/ibug.csv \
+        --img_dir=path_to_image \
+        --mark_dir=path_to_marks \
+        --pose_dir=path_to_pose \
+        --output_file=ibug.record
 
-    # Create validation record:
-    python generate_tfrecord.py \
-        --csv_input=data/data_validation.csv \
-        --img_folder=images \
-        --output_file=validation.record
-
-    # Create test record:
-    python generate_tfrecord.py \
-        --csv_input=data/data_test.csv  \
-        --img_folder=images \
-        --output_file=test.record
 """
 from __future__ import division, print_function
 

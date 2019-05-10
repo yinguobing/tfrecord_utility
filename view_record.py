@@ -11,7 +11,7 @@ import tensorflow as tf
 tf.enable_eager_execution()
 
 FLAGS = None
-IMG_SIZE = 24
+IMG_SIZE = 112
 
 
 def parse_tfrecord(record_path):
@@ -27,8 +27,8 @@ def parse_tfrecord(record_path):
         'image/filename': tf.FixedLenFeature([], tf.string),
         'image/encoded': tf.FixedLenFeature([], tf.string),
         'image/format': tf.FixedLenFeature([], tf.string),
-        'label/marks': tf.FixedLenFeature([2], tf.float32),
-        'label/pose': tf.FixedLenFeature([], tf.float32)
+        'label/marks': tf.FixedLenFeature([136], tf.float32),
+        'label/pose': tf.FixedLenFeature([3], tf.float32)
     }
 
     def _parse_function(example_proto):
@@ -40,55 +40,41 @@ def parse_tfrecord(record_path):
 
 
 def _draw_landmark_point(image, points):
-    """
-    Draw landmark point on image.
-    """
+    """Draw landmark point on image."""
     for point in points:
         cv2.circle(image, (int(point[0]), int(
             point[1])), 2, (0, 255, 0), -1, cv2.LINE_AA)
 
 
 def show_record(filenames):
-    """.
-    Show the TFRecord contents
-    """
+    """Show the TFRecord contents"""
     # Generate dataset from TFRecord file.
-    dataset = tf.data.TFRecordDataset(filenames)
+    parsed_dataset = parse_tfrecord(filenames)
 
-    # Make dataset iterateable.
-    iterator = dataset.make_one_shot_iterator()
-    next_example = iterator.get_next()
+    for example in parsed_dataset:
+        image_decoded = tf.image.decode_image(example['image/encoded']).numpy()
+        height = example['image/height'].numpy()
+        width = example['image/width'].numpy()
+        depth = example['image/depth'].numpy()
+        filename = example['image/filename'].numpy()
+        format = example['image/format'].numpy()
+        marks = example['label/marks'].numpy()
+        pose = example['label/pose'].numpy()
 
-    # Extract features from single example
-    features = _extract_feature(next_example)
-    image_decoded = tf.image.decode_image(features['image/encoded'])
-    points = tf.cast(features['label/points'], tf.float32)
+        print(filename, format, width, height, depth, pose * 180)
+    
+        # Use OpenCV to preview the image.
+        image = np.array(image_decoded, np.uint8)
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-    # Use openCV for preview
-    # cv2.namedWindow("image", cv2.WINDOW_NORMAL)
+        # Draw the landmark on image
+        landmark = np.reshape(marks, (-1, 2)) * IMG_SIZE
+        _draw_landmark_point(image, landmark)
 
-    # Actual session to run the graph.
-    with tf.Session() as sess:
-        while True:
-            try:
-                image_tensor, raw_points = sess.run(
-                    [image_decoded, points])
-
-                # Use OpenCV to preview the image.
-                image = np.array(image_tensor, np.uint8)
-                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
-                # Draw the landmark on image
-                landmark = np.reshape(raw_points, (-1, 2)) * IMG_SIZE
-                _draw_landmark_point(image, landmark)
-
-                # Show the result
-                cv2.imshow("image", image)
-                if cv2.waitKey() == 27:
-                    break
-
-            except tf.errors.OutOfRangeError:
-                break
+        # Show the result
+        cv2.imshow("image", image)
+        if cv2.waitKey() == 27:
+            break
 
 
 if __name__ == "__main__":

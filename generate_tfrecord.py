@@ -22,6 +22,9 @@ import pandas as pd
 import tensorflow as tf
 from PIL import Image
 
+tf.enable_eager_execution()
+
+
 # FLAGS, used as interface of user inputs.
 flags = tf.app.flags
 flags.DEFINE_string('csv', '', 'The csv file contains all file to be encoded.')
@@ -44,6 +47,11 @@ def _float_feature(value):
     return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
 
 
+def _float_feature_list(value):
+    """Returns a float_list from a float / double."""
+    return tf.train.Feature(float_list=tf.train.FloatList(value=value))
+
+
 def _bytes_feature(value):
     """Returns a bytes_list from a string / byte."""
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
@@ -53,7 +61,7 @@ def get_ibug_files(sample_name):
     """Generate sample files tuple"""
     image_file = os.path.join(FLAGS.image_dir, sample_name + '.jpg')
     mark_file = os.path.join(FLAGS.mark_dir, sample_name + '.json')
-    pose_file = os.path.join(FLAGS.pose_dir, '-pose.json')
+    pose_file = os.path.join(FLAGS.pose_dir, sample_name + '-pose.json')
     return image_file, mark_file, pose_file
 
 
@@ -86,17 +94,20 @@ def _create_tf_example(ibug_sample):
     """create TFRecord example from a data sample."""
     # Get required features ready.
     image_shape = tf.image.decode_jpeg(ibug_sample["image"]).shape
+    pose = [ibug_sample['pose']['pitch'],
+            ibug_sample['pose']['yaw'],
+            ibug_sample['pose']['roll']]
 
     # After getting all the features, time to generate a TensorFlow example.
     feature = {
         'image/height': _int64_feature(image_shape[0]),
         'image/width': _int64_feature(image_shape[1]),
         'image/depth': _int64_feature(image_shape[2]),
-        'image/filename': _bytes_feature(ibug_sample['filename']),
+        'image/filename': _bytes_feature(ibug_sample['filename'].encode('utf8')),
         'image/encoded': _bytes_feature(ibug_sample['image']),
-        'image/format': _bytes_feature(ibug_sample['image_format']),
-        'label/marks': _float_feature(ibug_sample['marks']),
-        'label/pose': _float_feature(ibug_sample['pose'])
+        'image/format': _bytes_feature(ibug_sample['image_format'].encode('utf8')),
+        'label/marks': _float_feature_list(ibug_sample['marks']),
+        'label/pose': _float_feature_list(pose)
     }
     tf_example = tf.train.Example(features=tf.train.Features(feature=feature))
 
@@ -109,7 +120,8 @@ def main(_):
     tf_writer = tf.python_io.TFRecordWriter(FLAGS.output_file)
 
     samples = pd.read_csv(FLAGS.csv)
-    for _, sample_name in samples.iterrows():
+    for _, row in samples.iterrows():
+        sample_name = row['file_basename']
         img_file, mark_file, pose_file = get_ibug_files(sample_name)
         ibug_sample = get_ibug_sample(img_file, mark_file, pose_file)
         tf_example = _create_tf_example(ibug_sample)

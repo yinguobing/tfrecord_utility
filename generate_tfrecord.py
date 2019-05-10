@@ -6,7 +6,7 @@ The sample used here is a extended IBUG data set which is consist of three parts
  3. head pose: pitch, yaw and roll angels. (This is not in the original IBUG data)
 
 Usage:
-    python generate_tfrecord.py \
+    python3 generate_tfrecord.py \
         --csv=data/ibug.csv \
         --image_dir=path_to_image \
         --mark_dir=path_to_marks \

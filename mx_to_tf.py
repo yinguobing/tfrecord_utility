@@ -8,10 +8,10 @@ tf.enable_eager_execution()
 
 # MXNET record:
 INDEX = '/data/dataset/public/ms_celeb_1m/faces_emore/train.idx'
-BIN = '/data/dataset/public/ms_celeb_1m/faces_emore/train.rec'
+BIN = '/data/dataset/public/ms_celeb_1m/tfrecord/train.rec'
 
 # The TFRecord file you want to generate.
-TFRECORD = "/data/dataset/public/ms_celeb_1m/train.tfrecord"
+TFRECORD = "/data/dataset/public/ms_celeb_1m/tfrecord/train-00009-of-00010"
 
 
 # All raw values should be converted to a type compatible with tf.Example. Use
@@ -53,7 +53,7 @@ def create_image_example(image_string, label):
     return tf.train.Example(features=tf.train.Features(feature=feature))
 
 
-def test_record(record_path):
+def parse_tfrecord(record_path):
     """Try to extract a image from the record file as jpg file."""
     raw_image_dataset = tf.data.TFRecordDataset(record_path)
 
@@ -71,16 +71,28 @@ def test_record(record_path):
         # Parse the input tf.Example proto using the dictionary above.
         return tf.parse_single_example(example_proto, image_feature_description)
 
-    parsed_image_dataset = raw_image_dataset.map(_parse_image_function)
+    parsed_dataset = raw_image_dataset.map(_parse_image_function)
 
-    for image_features in parsed_image_dataset:
+    return parsed_dataset
+
+
+def count_samples(parsed_dataset):
+    counter = 0
+    for image_features in parsed_dataset:
+        counter += 1
+    return counter
+
+
+def save_one_sample_to_file(parsed_dataset, file_to_be_written='sample.jpg'):
+    for image_features in parsed_dataset:
         label = image_features['label'].numpy()
         image_raw = image_features['image_raw']
-        with tf.gfile.GFile('sample.jpg', 'w') as fp:
+        with tf.gfile.GFile(file_to_be_written, 'w') as fp:
             fp.write(image_raw.numpy())
         break
     print('One record parsed, label: {}'.format(label))
-    print("An image extracted had been written to the current directory as sample.jpg.")
+    print("An image extracted had been written to the current directory as {}".format(
+        file_to_be_written))
 
 
 def run():
@@ -116,7 +128,12 @@ def run():
 
 if __name__ == "__main__":
     # Generate TFRecord file.
-    run()
+    # run()
 
     # Test the file.
-    test_record(TFRECORD)
+    # Parse the dataset.
+    dataset = parse_tfrecord(TFRECORD)
+    count_samples(dataset)
+
+    # Extract one sample from the record file.
+    save_one_sample_to_file(dataset, 'sample.jpg')

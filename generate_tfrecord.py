@@ -116,7 +116,6 @@ def _create_tf_example(ibug_sample):
 
 def main(_):
     """Entrance"""
-    # To maximize file I/O throughout, split the training data into pieces.
     tf_writer = tf.python_io.TFRecordWriter(FLAGS.output_file)
 
     samples = pd.read_csv(FLAGS.csv)

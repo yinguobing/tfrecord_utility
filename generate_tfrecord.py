@@ -14,10 +14,6 @@ Usage:
         --output_file=ibug.record
 
 """
-from __future__ import division, print_function
-
-import argparse
-import io
 import json
 import os
 import sys

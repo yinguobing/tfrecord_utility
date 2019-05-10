@@ -8,7 +8,7 @@ The sample used here is a extended IBUG data set which is consist of three parts
 Usage:
     python generate_tfrecord.py \
         --csv=data/ibug.csv \
-        --img_dir=path_to_image \
+        --image_dir=path_to_image \
         --mark_dir=path_to_marks \
         --pose_dir=path_to_pose \
         --output_file=ibug.record
@@ -19,13 +19,23 @@ from __future__ import division, print_function
 import argparse
 import io
 import json
+import os
 import sys
 
 import pandas as pd
 import tensorflow as tf
 from PIL import Image
 
-FLAGS = None
+# FLAGS, used as interface of user inputs.
+flags = tf.app.flags
+flags.DEFINE_string('csv', '', 'The csv file contains all file to be encoded.')
+flags.DEFINE_string('image_dir', '', 'The path of images directory')
+flags.DEFINE_string('mark_dir', '', 'The path of mark files directory')
+flags.DEFINE_string('pose_dir', '', 'The path of pose files directory')
+flags.DEFINE_integer('num_shards', 10, 'Number of the shards')
+flags.DEFINE_string('output_file', 'record.record',
+                    'Where the record file should be placed.')
+FLAGS = flags.FLAGS
 
 
 def _int64_feature(value):
@@ -41,6 +51,14 @@ def _float_feature(value):
 def _bytes_feature(value):
     """Returns a bytes_list from a string / byte."""
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+
+
+def get_ibug_files(sample_name):
+    """Generate sample files tuple"""
+    image_file = os.path.join(FLAGS.image_dir, sample_name + '.jpg')
+    mark_file = os.path.join(FLAGS.mark_dir, sample_name + '.json')
+    pose_file = os.path.join(FLAGS.pose_dir, '-pose.json')
+    return image_file, mark_file, pose_file
 
 
 def get_ibug_sample(image_file, mark_file, pose_file):
@@ -77,10 +95,10 @@ def _create_tf_example(ibug_sample):
     feature = {
         'image/height': _int64_feature(image_shape[0]),
         'image/width': _int64_feature(image_shape[1]),
-        'image/depth': _int64_feature(image_shape[2])
+        'image/depth': _int64_feature(image_shape[2]),
         'image/filename': _bytes_feature(ibug_sample['filename']),
         'image/encoded': _bytes_feature(ibug_sample['image']),
-        'image/format': _bytes_feature(ibug_sample['image_format'),
+        'image/format': _bytes_feature(ibug_sample['image_format']),
         'label/marks': _float_feature(ibug_sample['marks']),
         'label/pose': _float_feature(ibug_sample['pose'])
     }
@@ -89,37 +107,18 @@ def _create_tf_example(ibug_sample):
     return tf_example
 
 
-def main(unused_argv):
-    """
-    entrance
-    """
+def main(_):
+    """Entrance"""
+    # To maximize file I/O throughout, split the training data into pieces.
     tf_writer = tf.python_io.TFRecordWriter(FLAGS.output_file)
-    examples = pd.read_csv(FLAGS.csv_input)
-    for _, row in examples.iterrows():
-        current_example = _create_tf_example(row)
-        tf_writer.write(current_example.SerializeToString())
-    tf_writer.close()
+
+    samples = pd.read_csv(FLAGS.csv)
+    for _, sample_name in samples.iterrows():
+        img_file, mark_file, pose_file = get_ibug_files(sample_name)
+        ibug_sample = get_ibug_sample(img_file, mark_file, pose_file)
+        tf_example = _create_tf_example(ibug_sample)
+        tf_writer.write(tf_example.SerializeToString())
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--csv_input',
-        type=str,
-        default='data/data.csv',
-        help='Directory where the data file is.'
-    )
-    parser.add_argument(
-        '--img_folder',
-        type=str,
-        default="images",
-        help="Directory where the images live."
-    )
-    parser.add_argument(
-        "--output_file",
-        type=str,
-        default="data.record",
-        help="Where the record file should be placed."
-    )
-    FLAGS, unparsed = parser.parse_known_args()
-    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+    tf.app.run()

@@ -32,7 +32,6 @@ flags.DEFINE_string('csv', '', 'The csv file contains all file to be encoded.')
 flags.DEFINE_string('image_dir', '', 'The path of images directory')
 flags.DEFINE_string('mark_dir', '', 'The path of mark files directory')
 flags.DEFINE_string('pose_dir', '', 'The path of pose files directory')
-flags.DEFINE_integer('num_shards', 10, 'Number of the shards')
 flags.DEFINE_string('output_file', 'record.record',
                     'Where the record file should be placed.')
 FLAGS = flags.FLAGS

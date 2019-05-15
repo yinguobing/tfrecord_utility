@@ -9,8 +9,6 @@ This is a collection of handy Python scripts related with TensorFlow TFRecord fi
 - `generate_tfrecord.py`: Generate a TFRecord file.
 - `view_record.py`: View the contents of a TFRecord file.
 
-If you are looking for facial landmark points generation, please check out the 'ibug' branch.
-
 
 ### Prerequisites
 

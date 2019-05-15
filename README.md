@@ -51,7 +51,7 @@ and you want to put the generated TFRecord file here:
 
 Finally run the script like this:
 
-```python
+```shell
 python3 generate_tfrecord.py --csv /data/landmark/ibug.csv --image_dir /data/landmark/image/ --mark_dir /data/landmark/mark/ --pose_dir /data/landmark/pose/ --output_file /data/landmark/ibug.record
 
 ```

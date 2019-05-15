@@ -90,7 +90,7 @@ def get_ibug_sample(image_file, mark_file, pose_file):
             "pose": pose}
 
 
-def _create_tf_example(ibug_sample):
+def create_tf_example(ibug_sample):
     """create TFRecord example from a data sample."""
     # Get required features ready.
     image_shape = tf.image.decode_jpeg(ibug_sample["image"]).shape
@@ -123,7 +123,7 @@ def main(_):
         sample_name = row['file_basename']
         img_file, mark_file, pose_file = get_ibug_files(sample_name)
         ibug_sample = get_ibug_sample(img_file, mark_file, pose_file)
-        tf_example = _create_tf_example(ibug_sample)
+        tf_example = create_tf_example(ibug_sample)
         tf_writer.write(tf_example.SerializeToString())
 
 

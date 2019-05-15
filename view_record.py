@@ -59,11 +59,11 @@ def show_record(filenames):
         width = example['image/width'].numpy()
         depth = example['image/depth'].numpy()
         filename = example['image/filename'].numpy()
-        format = example['image/format'].numpy()
+        img_format = example['image/format'].numpy()
         marks = example['label/marks'].numpy()
         pose = example['label/pose'].numpy()
 
-        print(filename, format, width, height, depth, pose * 180)
+        print(filename, img_format, width, height, depth, pose * 180)
     
         # Use OpenCV to preview the image.
         image = np.array(image_decoded, np.uint8)

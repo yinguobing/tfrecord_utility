@@ -12,6 +12,8 @@ tf.enable_eager_execution()
 
 FLAGS = None
 IMG_SIZE = 112
+MARK_SIZE = 68 * 2
+POSE_SIZE = 3
 
 
 def parse_tfrecord(record_path):
@@ -27,8 +29,8 @@ def parse_tfrecord(record_path):
         'image/filename': tf.FixedLenFeature([], tf.string),
         'image/encoded': tf.FixedLenFeature([], tf.string),
         'image/format': tf.FixedLenFeature([], tf.string),
-        'label/marks': tf.FixedLenFeature([136], tf.float32),
-        'label/pose': tf.FixedLenFeature([3], tf.float32)
+        'label/marks': tf.FixedLenFeature([MARK_SIZE], tf.float32),
+        'label/pose': tf.FixedLenFeature([POSE_SIZE], tf.float32)
     }
 
     def _parse_function(example_proto):

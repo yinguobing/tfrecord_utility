@@ -39,7 +39,6 @@ Assuming you have IBUG data organized in the following manner:
 
 - `/data/landmark/image` Extracted face images.
 - `/data/landmark/mark` Extracted facial landmarks in JSON files.
-- `/data/landmark/pose` Generated head pose in JSON files. Note this is not a part of the original IBUG data.
 
 and you have list all the samples' name in a csv file:
 
@@ -51,12 +50,11 @@ and you want to put the generated TFRecord file here:
 
 Finally run the script like this:
 
-```shell
+```bash
 python3 generate_tfrecord.py \
   --csv /data/landmark/ibug.csv \
   --image_dir /data/landmark/image/ \
   --mark_dir /data/landmark/mark/ \
-  --pose_dir /data/landmark/pose/ \
   --output_file /data/landmark/ibug.record
 ```
 

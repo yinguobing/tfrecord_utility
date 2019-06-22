@@ -11,9 +11,8 @@ import tensorflow as tf
 tf.enable_eager_execution()
 
 FLAGS = None
-IMG_SIZE = 112
+IMG_SIZE = 128
 MARK_SIZE = 68 * 2
-POSE_SIZE = 3
 
 
 def parse_tfrecord(record_path):
@@ -30,7 +29,6 @@ def parse_tfrecord(record_path):
         'image/encoded': tf.FixedLenFeature([], tf.string),
         'image/format': tf.FixedLenFeature([], tf.string),
         'label/marks': tf.FixedLenFeature([MARK_SIZE], tf.float32),
-        'label/pose': tf.FixedLenFeature([POSE_SIZE], tf.float32)
     }
 
     def _parse_function(example_proto):
@@ -61,9 +59,8 @@ def show_record(filenames):
         filename = example['image/filename'].numpy()
         img_format = example['image/format'].numpy()
         marks = example['label/marks'].numpy()
-        pose = example['label/pose'].numpy()
 
-        print(filename, img_format, width, height, depth, pose * 180)
+        print(filename, img_format, width, height, depth)
     
         # Use OpenCV to preview the image.
         image = np.array(image_decoded, np.uint8)

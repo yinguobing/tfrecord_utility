@@ -1,14 +1,16 @@
 """
 A demonstartion file showing how to generate TensorFlow TFRecord file.
-The sample used here is the IBUG data set which is consist of 2 parts:
+The sample used here is a extended IBUG data set which is consist of three parts:
  1. a sample image.
  2. 68 facial landmarks.
+ 3. head pose: pitch, yaw and roll angels. (This is not in the original IBUG data)
 
 Usage:
     python3 generate_tfrecord.py \
         --csv=data/ibug.csv \
         --image_dir=path_to_image \
         --mark_dir=path_to_marks \
+        --pose_dir=path_to_pose \
         --output_file=data/ibug.record
 
 """
@@ -18,6 +20,7 @@ import sys
 
 import pandas as pd
 import tensorflow as tf
+from PIL import Image
 from tqdm import tqdm
 
 tf.enable_eager_execution()
@@ -28,6 +31,7 @@ flags = tf.app.flags
 flags.DEFINE_string('csv', '', 'The csv file contains all file to be encoded.')
 flags.DEFINE_string('image_dir', '', 'The path of images directory')
 flags.DEFINE_string('mark_dir', '', 'The path of mark files directory')
+flags.DEFINE_string('pose_dir', '', 'The path of pose files directory')
 flags.DEFINE_string('output_file', 'record.record',
                     'Where the record file should be placed.')
 FLAGS = flags.FLAGS
@@ -57,10 +61,11 @@ def get_ibug_files(sample_name):
     """Generate sample files tuple"""
     image_file = os.path.join(FLAGS.image_dir, sample_name + '.jpg')
     mark_file = os.path.join(FLAGS.mark_dir, sample_name + '.json')
-    return image_file, mark_file
+    pose_file = os.path.join(FLAGS.pose_dir, sample_name + '-pose.json')
+    return image_file, mark_file, pose_file
 
 
-def get_ibug_sample(image_file, mark_file):
+def get_ibug_sample(image_file, mark_file, pose_file):
     """Create a ibug sample from raw disk files."""
     # Keep the filename in the record for debug reasons.
     filename = image_file.split('/')[-1].split('.')[-2]
@@ -74,16 +79,24 @@ def get_ibug_sample(image_file, mark_file):
     with open(mark_file) as fid:
         marks = json.load(fid)
 
+    # Read the pose from a json file.
+    with open(pose_file) as fid:
+        pose = json.load(fid)
+
     return {"filename": filename,
             "image_format": ext_name,
             "image": encoded_jpg,
-            "marks": marks}
+            "marks": marks,
+            "pose": pose}
 
 
 def create_tf_example(ibug_sample):
     """create TFRecord example from a data sample."""
     # Get required features ready.
     image_shape = tf.image.decode_jpeg(ibug_sample["image"]).shape
+    pose = [ibug_sample['pose']['pitch'],
+            ibug_sample['pose']['yaw'],
+            ibug_sample['pose']['roll']]
 
     # After getting all the features, time to generate a TensorFlow example.
     feature = {
@@ -93,7 +106,8 @@ def create_tf_example(ibug_sample):
         'image/filename': _bytes_feature(ibug_sample['filename'].encode('utf8')),
         'image/encoded': _bytes_feature(ibug_sample['image']),
         'image/format': _bytes_feature(ibug_sample['image_format'].encode('utf8')),
-        'label/marks': _float_feature_list(ibug_sample['marks'])
+        'label/marks': _float_feature_list(ibug_sample['marks']),
+        'label/pose': _float_feature_list(pose)
     }
     tf_example = tf.train.Example(features=tf.train.Features(feature=feature))
 
@@ -107,8 +121,8 @@ def main(_):
     samples = pd.read_csv(FLAGS.csv)
     for _, row in tqdm(samples.iterrows()):
         sample_name = row['file_basename']
-        img_file, mark_file = get_ibug_files(sample_name)
-        ibug_sample = get_ibug_sample(img_file, mark_file)
+        img_file, mark_file, pose_file = get_ibug_files(sample_name)
+        ibug_sample = get_ibug_sample(img_file, mark_file, pose_file)
         tf_example = create_tf_example(ibug_sample)
         tf_writer.write(tf_example.SerializeToString())
 

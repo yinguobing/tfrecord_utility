@@ -8,11 +8,15 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-tf.enable_eager_execution()
 
 FLAGS = None
 IMG_SIZE = 128
 MARK_SIZE = 68 * 2
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--record", type=str, default="train.record",
+                    help="The record file.")
+args = parser.parse_args()
 
 
 def parse_tfrecord(record_path):
@@ -22,18 +26,18 @@ def parse_tfrecord(record_path):
     # Create a dictionary describing the features. This dict should be
     # consistent with the one used while generating the record file.
     feature_description = {
-        'image/height': tf.FixedLenFeature([], tf.int64),
-        'image/width': tf.FixedLenFeature([], tf.int64),
-        'image/depth': tf.FixedLenFeature([], tf.int64),
-        'image/filename': tf.FixedLenFeature([], tf.string),
-        'image/encoded': tf.FixedLenFeature([], tf.string),
-        'image/format': tf.FixedLenFeature([], tf.string),
-        'label/marks': tf.FixedLenFeature([MARK_SIZE], tf.float32),
+        'image/height': tf.io.FixedLenFeature([], tf.int64),
+        'image/width': tf.io.FixedLenFeature([], tf.int64),
+        'image/depth': tf.io.FixedLenFeature([], tf.int64),
+        'image/filename': tf.io.FixedLenFeature([], tf.string),
+        'image/encoded': tf.io.FixedLenFeature([], tf.string),
+        'image/format': tf.io.FixedLenFeature([], tf.string),
+        'label/marks': tf.io.FixedLenFeature([MARK_SIZE], tf.float32),
     }
 
     def _parse_function(example_proto):
         # Parse the input tf.Example proto using the dictionary above.
-        return tf.parse_single_example(example_proto, feature_description)
+        return tf.io.parse_single_example(example_proto, feature_description)
 
     parsed_dataset = dataset.map(_parse_function)
     return parsed_dataset
@@ -61,7 +65,7 @@ def show_record(filenames):
         marks = example['label/marks'].numpy()
 
         print(filename, img_format, width, height, depth)
-    
+
         # Use OpenCV to preview the image.
         image = np.array(image_decoded, np.uint8)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
@@ -77,12 +81,4 @@ def show_record(filenames):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--record",
-        type=str,
-        default="train.record",
-        help="The record file."
-    )
-    args = parser.parse_args()
     show_record(args.record)

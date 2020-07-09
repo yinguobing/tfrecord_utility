@@ -1,4 +1,4 @@
-"""Convert the content of the record.
+"""Convert the image size of the record.
 
 Useage:
 
@@ -14,7 +14,8 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-tf.enable_eager_execution()
+MARK_SIZE = 68 * 2
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--record", type=str,  default="train.record",
@@ -53,18 +54,18 @@ def parse_tfrecord(record_path):
     # Create a dictionary describing the features. This dict should be
     # consistent with the one used while generating the record file.
     feature_description = {
-        'image/height': tf.FixedLenFeature([], tf.int64),
-        'image/width': tf.FixedLenFeature([], tf.int64),
-        'image/depth': tf.FixedLenFeature([], tf.int64),
-        'image/filename': tf.FixedLenFeature([], tf.string),
-        'image/encoded': tf.FixedLenFeature([], tf.string),
-        'image/format': tf.FixedLenFeature([], tf.string),
-        'label/marks': tf.FixedLenFeature([MARK_SIZE], tf.float32),
+        'image/height': tf.io.FixedLenFeature([], tf.int64),
+        'image/width': tf.io.FixedLenFeature([], tf.int64),
+        'image/depth': tf.io.FixedLenFeature([], tf.int64),
+        'image/filename': tf.io.FixedLenFeature([], tf.string),
+        'image/encoded': tf.io.FixedLenFeature([], tf.string),
+        'image/format': tf.io.FixedLenFeature([], tf.string),
+        'label/marks': tf.io.FixedLenFeature([MARK_SIZE], tf.float32),
     }
 
     def _parse_function(example_proto):
         # Parse the input tf.Example proto using the dictionary above.
-        return tf.parse_single_example(example_proto, feature_description)
+        return tf.io.parse_single_example(example_proto, feature_description)
 
     parsed_dataset = dataset.map(_parse_function)
     return parsed_dataset
@@ -119,7 +120,7 @@ def convert_dataset(input_record, output_record):
     # Generate dataset from TFRecord file.
     parsed_dataset = parse_tfrecord(input_record)
 
-    tf_writer = tf.python_io.TFRecordWriter(output_record)
+    tf_writer = tf.io.TFRecordWriter(output_record)
 
     for example in parsed_dataset:
         print('.', end=' ')
